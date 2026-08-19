@@ -1,0 +1,53 @@
+# Reserved usernames - docs/10 §7.
+#
+# Maintained here rather than in Go source so the list can be reviewed and
+# extended without a code change. One name per line, case-insensitive.
+# Lines starting with # are comments.
+#
+# Two categories:
+#   1. Names that would let an account impersonate the platform or its staff.
+#   2. Names that collide with a top-level route in docs/03 - Information
+#      Architecture, which would make /author/{username} ambiguous.
+
+# --- Platform and staff impersonation -------------------------------------
+admin
+administrator
+moderator
+mod
+support
+system
+official
+root
+api
+security
+staff
+team
+help
+fictionthai
+noreply
+no-reply
+postmaster
+webmaster
+
+# --- Reserved routes (docs/03) --------------------------------------------
+about
+account
+author
+community
+copyright
+explore
+library
+login
+logout
+novel
+notifications
+privacy
+profile
+read
+register
+search
+settings
+signin
+signup
+studio
+terms

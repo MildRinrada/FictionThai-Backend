@@ -673,18 +673,23 @@ const DiscussedWindow = "7 days"
 // ListDiscussedFictions returns the fictions PUBLIC posts referenced most in
 // the recent window.
 //
-// Deliberately viewer-independent: only public posts count, and only publicly
-// readable fictions qualify - no owner clause. That keeps the panel a
-// discovery surface with one cacheable answer for everyone, and means it can
-// never surface a private fiction to the one person who can see it while
-// silently changing rank for everyone else.
+// Deliberately viewer-independent: only public posts count, and only LISTED
+// fictions qualify - no owner clause. That keeps the panel a discovery surface
+// with one cacheable answer for everyone, and means it can never surface a
+// private fiction to the one person who can see it while silently changing
+// rank for everyone else.
+//
+// novels.ListedSQL rather than ReadableSQL, and the difference is not cosmetic:
+// readable admits `unlisted`, so this panel used to advertise fictions their
+// authors had chosen to keep off every listing. A panel titled "คุยถึงกันเยอะ"
+// is discovery, so it takes the browse predicate.
 func (r *Repository) ListDiscussedFictions(
 	ctx context.Context, limit int,
 ) ([]DiscussedFiction, error) {
 	query := `
 		SELECT ` + novelReferenceColumns + `, ` + noChapterColumns + `, count(*) AS post_count
 		FROM community_posts p
-		JOIN novels n ON n.id = p.novel_id AND (` + novels.ReadableSQL + `)
+		JOIN novels n ON n.id = p.novel_id AND (` + novels.ListedSQL + `)
 		WHERE p.deleted_at IS NULL
 		  AND p.status = 'published'
 		  AND p.visibility = 'public'

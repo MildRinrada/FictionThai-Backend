@@ -182,18 +182,25 @@ func TestShelves_PublicShelfNeverListsUnreadableFiction(t *testing.T) {
 	// 18+ เนื้อหาทางเพศชัดเจน work is reachable by link and never LISTED
 	// (§13B). A shelf is a listing.
 	explicit := env.publishedNovel(t, owner, map[string]any{"age_rating": "explicit"})
+	// ลิงก์ลับ: readable by anyone holding the link, and for that reason it
+	// passes novels.ReadableSQL - which is exactly how it used to reach this
+	// listing. The studio promises this writer "เรื่องไม่ขึ้นหน้ารวม", and a
+	// public shelf is หน้ารวม. Shelving it must not undo that promise, and
+	// note the shelver need not be the author: anyone could publish someone
+	// else's secret link by adding it to their own open shelf.
+	unlisted := env.publishedNovel(t, owner, map[string]any{"visibility": "unlisted"})
 
 	shelf := env.createShelf(t, owner,
 		map[string]any{"name": "ชั้นเปิด", "is_public": true})
-	for _, id := range []string{open.ID, draft.ID, explicit.ID} {
+	for _, id := range []string{open.ID, draft.ID, explicit.ID, unlisted.ID} {
 		if res := env.shelveNovel(t, owner, shelf.ID, id); res.status != http.StatusOK {
 			t.Fatalf("shelve %s status = %d. body: %s", id, res.status, res.body)
 		}
 	}
 
-	// The owner sees all three - they put them there.
+	// The owner sees all four - they put them there.
 	mine := findShelf(env.myShelves(t, owner), shelf.ID)
-	if mine == nil || mine.ItemCount != 3 {
+	if mine == nil || mine.ItemCount != 4 {
 		t.Fatalf("the owner's own view lost an item: %+v", mine)
 	}
 
@@ -212,7 +219,11 @@ func TestShelves_PublicShelfNeverListsUnreadableFiction(t *testing.T) {
 	}
 
 	body := string(env.asGuest(t, http.MethodGet, "/api/v1/users/"+me.Username+"/shelves").body)
-	for label, id := range map[string]string{"private draft": draft.ID, "explicit fiction": explicit.ID} {
+	for label, id := range map[string]string{
+		"private draft":    draft.ID,
+		"explicit fiction": explicit.ID,
+		"unlisted fiction": unlisted.ID,
+	} {
 		if strings.Contains(body, id) {
 			t.Fatalf("the public shelf leaked a %s: %s", label, body)
 		}

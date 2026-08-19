@@ -41,19 +41,26 @@ func (a *argList) add(value any) string {
 // publicItemSQL is the predicate for "a fiction a PUBLIC shelf may show",
 // against alias `n`.
 //
-// novels.ReadableSQL is the shared guest-tier predicate, used rather than
-// copied: a shelf that decided readability by its own rule would eventually
-// publish a private draft, which is the whole failure mode docs/11 §31 names.
-// It is the guest constant, not ReadableSQLFor, because this listing is
+// novels.ListedSQL is the shared guest-tier BROWSE predicate, used rather than
+// copied: a shelf that decided this by its own rule would eventually publish a
+// private draft, which is the whole failure mode docs/11 §31 names. It is the
+// guest constant, not a ...For variant, because this listing is
 // viewer-INDEPENDENT - the same bytes for everyone, so one cached response
 // serves the whole page (docs/14 §7).
+//
+// It is ListedSQL and not ReadableSQL, which is the fix for a real leak: a
+// public shelf is a browse surface, and readable admits `unlisted` work. A
+// writer who chose ลิงก์ลับ - told, in the studio, that "เรื่องไม่ขึ้นหน้ารวม" -
+// had their fiction listed to every guest the moment anyone shelved it.
+// Readable answers "may this person open it"; a shelf is asking the different
+// question "may this be advertised".
 //
 // The rating clause is the second half of the same idea. A public shelf is a
 // browse surface, and explicit work is never listed on one however the reader
 // has set their preferences (§13B, AgeRating.NeverListed) - it stays reachable
 // by link and from its author's own page, which is where it belongs.
 func publicItemSQL(args *argList) string {
-	return `((` + novels.ReadableSQL + `)
+	return `((` + novels.ListedSQL + `)
 		AND n.age_rating <> ` + args.add(string(novels.RatingExplicit)) + `)`
 }
 

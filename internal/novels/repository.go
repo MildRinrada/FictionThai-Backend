@@ -98,6 +98,30 @@ const ReadableSQL = `
 	AND (n.publish_at IS NULL OR n.publish_at <= now())
 	AND n.visibility IN ('public', 'unlisted')`
 
+// ListedSQL is the guest-tier BROWSE predicate, against `n`: what may appear on
+// a surface a reader can stumble onto without already holding a link.
+//
+// It is deliberately NARROWER than ReadableSQL, and the one row of difference
+// IS the `unlisted` rung. Readable admits unlisted work, because a person
+// holding the link may open it. A browse surface must not, because ลิงก์ลับ
+// means precisely "the fiction does not appear in a list" - the studio promises
+// the writer "เรื่องไม่ขึ้นหน้ารวม" in those words.
+//
+// The distinction is easy to lose, and it was lost: public bookshelves and the
+// community's discussed panel both filtered with ReadableSQL, so every browse
+// surface OTHER than the novels listing published exactly the work its author
+// had chosen to keep off the shelves. Any new listing belongs on this constant,
+// not on ReadableSQL - readable answers "may this person open it", which is a
+// different question from "may this be advertised".
+//
+// Viewer-independent by design, so a listing built on it stays one cacheable
+// answer for everyone (docs/14 §7). The members rung needs to know who is
+// asking and therefore lives in listedSQL, which the novels listing uses.
+const ListedSQL = `
+	n.deleted_at IS NULL AND n.status <> 'draft'
+	AND (n.publish_at IS NULL OR n.publish_at <= now())
+	AND n.visibility = 'public'`
+
 // ReadableSQLFor is ReadableSQL for a KNOWN viewer: the same rule, plus the two
 // rungs that depend on who is asking (§13C).
 //
